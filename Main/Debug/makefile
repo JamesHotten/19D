@@ -60,8 +60,8 @@ all: main-build
 main-build: AD9910.elf secondary-outputs
 
 # 工具调用
-AD9910.elf AD9910.map: $(OBJS) $(USER_OBJS) C:\Users\JamesHotten\Desktop\code\STM32CubeIDE\workspace_1.18.1\AD9910\STM32F407VETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "AD9910.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\JamesHotten\Desktop\code\STM32CubeIDE\workspace_1.18.1\AD9910\STM32F407VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="AD9910.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+AD9910.elf AD9910.map: $(OBJS) $(USER_OBJS) C:\Users\JamesHotten\Desktop\HCl\电赛\Demos\AD9910+ADS8688\STM32F407VETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "AD9910.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\JamesHotten\Desktop\HCl\电赛\Demos\AD9910+ADS8688\STM32F407VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="AD9910.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo '已结束构建目标： $@'
 	@echo ' '
 

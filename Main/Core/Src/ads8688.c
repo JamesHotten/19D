@@ -82,7 +82,7 @@ void ADS8688_Init(void) {
 	ADS8688_Write_Program(CH6_INPUT_RANGE, VREF_B_125);	// ͨ��6�����뷶ΧΪ��5.12V
 	ADS8688_Write_Program(CH7_INPUT_RANGE, VREF_B_125);	// ͨ��7�����뷶ΧΪ��5.12V
 	ADS8688_Write_Program(CH_PWR_DN, 0x00);
-	ADS8688_Write_Program(AUTO_SEQ_EN, 0xFF);
+	ADS8688_Write_Program(AUTO_SEQ_EN, 0x0F);
 	ADS8688_Write_Command(AUTO_RST);
 }
 
@@ -103,7 +103,7 @@ void ADS8688_Write_Command(uint16_t com) {
 	wr_data[1] = (uint8_t) (com & 0x00FF);
 
 	CS_L;
-	HAL_SPI_Transmit(&hspi2, wr_data, 2, 0xFFFF);
+	HAL_SPI_Transmit(&hspi1, wr_data, 2, 0xFFFF);
 	CS_H;
 }
 
@@ -125,7 +125,7 @@ void ADS8688_Write_Program(uint8_t addr, uint8_t data) {
 	wr_data[1] = data;
 
 	CS_L;
-	HAL_SPI_Transmit(&hspi2, wr_data, 2, 0xFFFF);
+	HAL_SPI_Transmit(&hspi1, wr_data, 2, 0xFFFF);
 	CS_H;
 }
 
@@ -144,8 +144,8 @@ uint8_t ADS8688_Read_Program(uint8_t addr) {
 	uint8_t wr_data[2] = { 0x00, 0x00 };
 
 	wr_data[0] = addr << 1;
-	HAL_SPI_Transmit(&hspi2, wr_data, 2, 0xFFFF);
-	HAL_SPI_Receive(&hspi2, &Rxdata, 1, 0xFFFF);
+	HAL_SPI_Transmit(&hspi1, wr_data, 2, 0xFFFF);
+	HAL_SPI_Receive(&hspi1, &Rxdata, 1, 0xFFFF);
 	CS_H;
 
 	return Rxdata;
@@ -168,7 +168,7 @@ void Get_AUTO_RST_Mode_ADC_Data(uint8_t ch_num, uint16_t *data) {
 
 	for (i = 0; i < ch_num; i++) {
 		CS_L;
-		HAL_SPI_TransmitReceive(&hspi2, (uint8_t*) wr_data, (uint8_t*) Rxdata,
+		HAL_SPI_TransmitReceive(&hspi1, (uint8_t*) wr_data, (uint8_t*) Rxdata,
 				4, 0xFFFF);
 		CS_H;
 		*(data + i) = ((uint16_t) Rxdata[2] << 8) | Rxdata[3];

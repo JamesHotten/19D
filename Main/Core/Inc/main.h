@@ -65,6 +65,8 @@ void Error_Handler(void);
 #define ADCDAISY_GPIO_Port GPIOE
 #define ADCRST_Pin GPIO_PIN_14
 #define ADCRST_GPIO_Port GPIOE
+#define GPIO_RELAY_Pin GPIO_PIN_15
+#define GPIO_RELAY_GPIO_Port GPIOE
 #define ADCCS_Pin GPIO_PIN_11
 #define ADCCS_GPIO_Port GPIOB
 #define PF1_Pin GPIO_PIN_12
