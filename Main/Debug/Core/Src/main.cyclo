@@ -1,7 +1,9 @@
-../Core/Src/main.c:79:6:adcin	3
-../Core/Src/main.c:94:6:findvpp	4
-../Core/Src/main.c:129:7:Rout	1
-../Core/Src/main.c:141:7:Rin	1
-../Core/Src/main.c:154:5:main	1
-../Core/Src/main.c:230:6:SystemClock_Config	3
-../Core/Src/main.c:276:6:Error_Handler	1
+../Core/Src/main.c:87:6:adcin	7
+../Core/Src/main.c:105:6:findvpp	4
+../Core/Src/main.c:141:7:Rout	1
+../Core/Src/main.c:160:7:Rin	1
+../Core/Src/main.c:171:6:FAu	12
+../Core/Src/main.c:229:6:linearInterpolation	2
+../Core/Src/main.c:251:5:main	3
+../Core/Src/main.c:346:6:SystemClock_Config	3
+../Core/Src/main.c:393:6:Error_Handler	1

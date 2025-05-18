@@ -75,14 +75,14 @@ void ADS8688_Init(void) {
 	delay_us(2);
 	ADS8688_Write_Program(CH0_INPUT_RANGE, VREF_B_125);	// ͨ��0�����뷶ΧΪ��5.12V
 	ADS8688_Write_Program(CH1_INPUT_RANGE, VREF_B_125);	// ͨ��1�����뷶ΧΪ��5.12V
-	ADS8688_Write_Program(CH2_INPUT_RANGE, VREF_B_125);	// ͨ��2�����뷶ΧΪ��5.12V
-	ADS8688_Write_Program(CH3_INPUT_RANGE, VREF_B_125);	// ͨ��3�����뷶ΧΪ��5.12V
+	ADS8688_Write_Program(CH2_INPUT_RANGE, VREF_B_25);	// ͨ��2�����뷶ΧΪ��5.12V
+	ADS8688_Write_Program(CH3_INPUT_RANGE, VREF_B_25);	// ͨ��3�����뷶ΧΪ��5.12V
 	ADS8688_Write_Program(CH4_INPUT_RANGE, VREF_B_125);	// ͨ��4�����뷶ΧΪ��5.12V
 	ADS8688_Write_Program(CH5_INPUT_RANGE, VREF_B_125);	// ͨ��5�����뷶ΧΪ��5.12V
 	ADS8688_Write_Program(CH6_INPUT_RANGE, VREF_B_125);	// ͨ��6�����뷶ΧΪ��5.12V
 	ADS8688_Write_Program(CH7_INPUT_RANGE, VREF_B_125);	// ͨ��7�����뷶ΧΪ��5.12V
 	ADS8688_Write_Program(CH_PWR_DN, 0x00);
-	ADS8688_Write_Program(AUTO_SEQ_EN, 0x0F);
+	ADS8688_Write_Program(AUTO_SEQ_EN, 0x07);
 	ADS8688_Write_Command(AUTO_RST);
 }
 

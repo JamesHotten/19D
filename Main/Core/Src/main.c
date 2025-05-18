@@ -39,7 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ADCCHS 4
+#define ADCCHS 3
 #define ADCPOINT 512
 /* USER CODE END PD */
 
@@ -59,12 +59,20 @@ u16 ADS_CH_Value[ADCCHS] = { 0 };
 float adc_data[ADCCHS][ADCPOINT];
 float adc_fs = 0;
 float u1, u2, u3, u4 = 0;
+int fH = 0;
 float vpp[ADCCHS];
+float bate;
 char str[100];
 int a = 10;
-
+int top = 0;
+int freq_index[48] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70,
+		80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1e3, 2e3, 3e3, 4e3,
+		5e3, 6e3, 7e3, 8e3, 9e3, 1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 9e4,
+		1e5, 2e5, 3e5 };
+float Au[48];
 float Rout1 = 0.0;
 float Rin1 = 0.0;
+int flag = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -84,7 +92,10 @@ void adcin() {
 
 		for (j = 0; j < ADCCHS; j++) {
 //			ADS_CH_Value[j] = Get_MAN_Ch_n_Mode_Data();
-			adc_data[j][i] = (ADS_CH_Value[j] - 32765) * 20.48 / 65171;
+			if (j == 0 || j == 1)
+				adc_data[j][i] = (ADS_CH_Value[j] - 32765) * 10.24 / 65535;
+			if (j == 2 || j == 3)
+				adc_data[j][i] = (ADS_CH_Value[j] - 32765) * 20.48 / 65535;
 //			adc_data[j][i] = ADS_CH_Value[j];
 		}
 
@@ -125,26 +136,112 @@ void findvpp() {
 		// 假设信号是正弦波，峰峰值与有效值的关系为：Vpp = 2 * sqrt(2) * Vrms
 		vpp[j] = 2 * sqrtf(2 * e[j]);
 	}
-}
+}		//可用优化
+
 float Rout() {
+
+	Freq_convert(1000);   // 璁剧疆棰���涓�1kHz锛���浣�Hz
+	Write_Amplitude(46); // 璁剧疆骞�搴��硷�1-800mV���村��锛�锛�杩���璁剧疆涓�200瀵瑰���骞�搴�
+	delay_ms(100);
+	adcin();
+	findvpp();
+	u4 = vpp[2];
+	HAL_GPIO_WritePin(GPIO_RELAY_GPIO_Port, GPIO_RELAY_Pin, GPIO_PIN_SET);
+	delay_ms(100);
+	adcin();
 	findvpp();
 	u3 = vpp[2];
-	HAL_GPIO_WritePin(GPIO_RELAY_GPIO_Port, GPIO_RELAY_Pin, GPIO_PIN_SET);
-
-	u4 = vpp[3];
-	HAL_GPIO_WritePin(GPIO_RELAY_GPIO_Port, GPIO_RELAY_Pin, GPIO_PIN_SET);
-
+	HAL_GPIO_WritePin(GPIO_RELAY_GPIO_Port, GPIO_RELAY_Pin, GPIO_PIN_RESET);
+	delay_ms(100);
 	int RL = 2000;
 	return (u3 - u4) * RL / u4;
 }
 
 float Rin() {
+	Freq_convert(1000);   // 璁剧疆棰���涓�1kHz锛���浣�Hz
+	Write_Amplitude(100);   // 璁剧疆骞�搴��硷�1-800mV���村��锛�锛�杩���璁剧疆涓�200瀵瑰���骞�搴�
+	delay_ms(100);
+	adcin();
 	findvpp();
 	u1 = vpp[0];
 	u2 = vpp[1];
-	int RP = 2100;
-	return u2 * RP / (u1 - u2);
+	int RP = 2000;
+	return u1 * RP / (u2 - u1);
 }
+void FAu() {
+	HAL_GPIO_WritePin(GPIO_RELAY_GPIO_Port, GPIO_RELAY_Pin, GPIO_PIN_SET);
+	delay_ms(100);
+	float max = 0;
+	top = 0;
+	for (ulong i = 1; i <= 300e3;) {
+		Freq_convert(i);   // 璁剧疆棰���涓�1kHz锛���浣�Hz
+		Write_Amplitude(46);
+		delay_ms(100);
+		adcin();
+		findvpp();
+		Au[top] = vpp[2] * 1000 / 50;
+		if (Au[top] > max)
+			max = Au[top];
+		if (i >= 100e3)
+			i += 100e3;
+		else if (i >= 10e3)
+			i += 10e3;
+		else if (i >= 1e3)
+			i += 1e3;
+		else if (i >= 1e2)
+			i += 1e2;
+		else if (i >= 10)
+			i += 10;
+		else
+			i++;
+		top++;
+
+	}
+
+	int freq_min;
+	int freq_max;
+	for (int i = 0; i < top - 1; i++) {
+		if ((Au[i] / max - 0.707) * (Au[i + 1] / max - 0.707) < 0) {
+			freq_min = freq_index[i];
+			freq_max = freq_index[i + 1];
+		}
+	}
+	Freq_convert(freq_min);   // 璁剧疆棰���涓�1kHz锛���浣�Hz
+	Write_Amplitude(46);
+	delay_ms(100);
+	adcin();
+	findvpp();
+	int prev = vpp[2] * 1000 / 50;
+	for (int i = freq_min + 1; i < freq_max; i += 1e2) {
+		Freq_convert(i);   // 璁剧疆棰���涓�1kHz锛���浣�Hz
+		Write_Amplitude(46);
+		delay_ms(100);
+		adcin();
+		findvpp();
+		int tmp = vpp[2] * 1000 / 50;
+		if ((prev / max - 0.707) * (tmp / max - 0.707) < 0)
+			fH = i - 1;
+		prev = tmp;
+	}
+	HAL_GPIO_WritePin(GPIO_RELAY_GPIO_Port, GPIO_RELAY_Pin, GPIO_PIN_RESET);
+	delay_ms(100);
+}
+void linearInterpolation(float *amp, int originalSize, float *ampInterpolated,
+		int newSize) {
+	int i, j;
+	float ratio;
+
+	for (i = 0; i < newSize; i++) {
+		// 计算当前插值点在原始数据中的位置
+		float position = (float) i / (newSize - 1) * (originalSize - 1);
+		j = (int) position;    // 当前插值点所在的区间起始点
+		ratio = position - j; // 插值点在区间内的比例位置
+
+		// 线性插值公式
+		ampInterpolated[i] = amp[j] + ratio * (amp[j + 1] - amp[j]);
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -197,24 +294,43 @@ int main(void) {
 //AD9910_RAM_WAVE_Set(SQUARE_WAVE);	// ��缃�RAM娉㈠舰�����ㄦā寮�
 //娉ㄩ��锛�SQUARE_WAVE琛ㄧず�规尝锛�TRIG_WAVE琛ㄧず瑙���娉㈠舰锛�SQUARE_WAVE琛ㄧず�规尝锛�SINC_WAVE琛ㄧずSINC娉㈠舰
 
-//�烘��棰�����骞�搴�璁剧疆
-	Freq_convert(1000);   // 璁剧疆棰���涓�1kHz锛���浣�Hz
-	Write_Amplitude(200); // 璁剧疆骞�搴��硷�1-800mV���村��锛�锛�杩���璁剧疆涓�200瀵瑰���骞�搴�
+////�烘��棰�����骞�搴�璁剧疆
+//	for (int i = 40; i < 55;) {
+//		Freq_convert(1000);   // 璁剧疆棰���涓�1kHz锛���浣�Hz
+//		Write_Amplitude(i); // 璁剧疆骞�搴��硷�1-800mV���村��锛�锛�杩���璁剧疆涓�200瀵瑰���骞�搴�
+//		i += 1;
+//	}
 	ADS8688_Init();
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
+
 	while (1) {
-
-		adcin();
-		Rout1 = Rout();
+		FAu();
 		Rin1 = Rin();
-
+		Rout1 = Rout();
+		bate = u3 * 1000 / 50;
 		sprintf(str, "x0.val=%d", (int) (Rout1 * 100));
 		tjc_send_string(str);
 		sprintf(str, "x1.val=%d", (int) (Rin1 * 100));
 		tjc_send_string(str);
+		sprintf(str, "x2.val=%d", (int) (bate * 100));
+		tjc_send_string(str);
+		sprintf(str, "n0.val=%d", fH);
+		tjc_send_string(str);
+
+		if (flag == 0) {
+			float Au1[256];
+			linearInterpolation(Au, 48, Au1, 256);
+			for (int i = 0; i < 256; i++) {
+				// 向曲线s0的通道0传输1�?数据,add指令不支持跨页面
+				uint16_t Amp = Au1[i];
+				sprintf(str, "add s0.id,0,%d\xff\xff\xff", (int) Amp * 2 - 10);
+				tjc_send_string(str);
+			}
+			flag++;
+		}
 
 		/* USER CODE END WHILE */
 
@@ -239,12 +355,13 @@ void SystemClock_Config(void) {
 	/** Initializes the RCC Oscillators according to the specified parameters
 	 * in the RCC_OscInitTypeDef structure.
 	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-	RCC_OscInitStruct.PLL.PLLM = 25;
-	RCC_OscInitStruct.PLL.PLLN = 336;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLM = 8;
+	RCC_OscInitStruct.PLL.PLLN = 168;
 	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
 	RCC_OscInitStruct.PLL.PLLQ = 4;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
